@@ -75,14 +75,14 @@ io.on('connection', (socket) => {
     const message = new Msg(dicMessageContent)
     message.save().then(() => {
     });
-    /*   ### APPEND VALORES ###
+
      Msg.findOneAndUpdate(
        { cIdTrip: dicMessageContent.cIdTrip },
        { $push: { "listUserTrip": newTrip.listUserTrip} }
      ).exec(); 
  
      Msg.find({ cIdTrip: dicMessageContent.cIdTrip }).then(result => {
-       console.log(re"sult);
+       console.log(result);
      });
      
   });
