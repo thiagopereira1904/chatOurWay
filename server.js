@@ -1,4 +1,3 @@
-'use strict';
 
 const express = require('express');
 const socketIO = require('socket.io');
@@ -11,10 +10,9 @@ const server = express()
   .listen(PORT, () => console.log(`Listening on ${PORT}`));
 
 const io = socketIO(server);
-/*
+
 const mongoose = require("mongoose");
 const mongoDB = "mongodb+srv://thiago-psilva2812:dpmp658450@cluster0.wjabzhu.mongodb.net/message-database?retryWrites=true&w=majority";
-
 const msgSchema = new mongoose.Schema({
   cIdTrip: {
     type: Number,
@@ -27,7 +25,6 @@ const msgSchema = new mongoose.Schema({
       }
     }
   ],
-
   listMessages: [
     {
       cIdMessage: {
@@ -48,15 +45,12 @@ const msgSchema = new mongoose.Schema({
     }
   ]
 });
-
 const Msg = mongoose.model('msg', msgSchema);
 module.exports = Msg;
-
-
 mongoose.connect(mongoDB).then(() => {
   console.log("conectado");
 });
-*/
+
 
 io.on('connection', (socket) => {
 
@@ -67,25 +61,20 @@ io.on('connection', (socket) => {
 
   socket.on('joinRoom', function (cIdTrip_value) {
     socket.join(cIdTrip_value);
-/*
+
     Msg.find({ cIdTrip: cIdTrip_value }).then(result => {
       console.log(result);
       socket.emit('all_messages', result);
     });
   })
-
-
   socket.on('newRoom', function (newTrip) {
-
     var dicMessageContent = {
       'cIdTrip': newTrip.cIdTrip,
       'listUserTrip': newTrip.listUserTrip
     }
-
     const message = new Msg(dicMessageContent)
     message.save().then(() => {
     });
-
     /*   ### APPEND VALORES ###
      Msg.findOneAndUpdate(
        { cIdTrip: dicMessageContent.cIdTrip },
@@ -95,10 +84,10 @@ io.on('connection', (socket) => {
      Msg.find({ cIdTrip: dicMessageContent.cIdTrip }).then(result => {
        console.log(re"sult);
      });
-     */
+     
   });
 
-/*
+
   socket.on('sendMessage', (MessageContent) => {
     var dicMessageContent = {
       'cIdTrip': MessageContent.cIdTrip,
@@ -108,16 +97,12 @@ io.on('connection', (socket) => {
       'cContent': MessageContent.cContent,
       'xTypeMessageContent': MessageContent.xTypeMessageContent
     }
-
     Msg.findOneAndUpdate(
       { cIdTrip: dicMessageContent.cIdTrip },
       { $push: { "listMessages": dicMessageContent }}
     ).exec();
-
-
     socket.to(dicMessageContent.cIdTrip).emit(dicMessageContent);
-
-  });*/
+  });
 
 
 });
