@@ -50,13 +50,12 @@ const msgSchema = new mongoose.Schema({
 });
 
 
-
 const Msg = mongoose.model('msg', msgSchema);
 module.exports = Msg;
-mongoose.connect(mongoDB).then(() => {
-  console.log("conectado");
-});
 
+mongoose.connect(mongoDB).then(() => {
+  console.log("conectado ao bd");
+});
 
 io.on('connection', (socket) => {
 
@@ -65,26 +64,20 @@ io.on('connection', (socket) => {
     console.log('A user disconnected');
   });
 
-  socket.on('joinRoom', function (cIdTrip_value) {
-    socket.join(cIdTrip_value);
-    console.log("Entrando na sala: ", cIdTrip_value);
-    Msg.find({ cIdTrip: cIdTrip_value }).then(result => {
-      socket.emit('all_messages', result);
-      socket.emit('online_na_sala', "Usuário logado na sala");
-    });
-  })
-
   socket.on('newRoom', function (newTrip) {
     var dicMessageContent = {
       'cIdTrip': newTrip.cIdTrip,
       'listUserTrip': newTrip.listUserTrip
     }
 
+
     async function pega_cIdTrp(params) {
       const resultado = await Msg.findOne(params);
+
       if (resultado == null) {
         const message = new Msg(dicMessageContent)
-        message.save();
+        message.save().then(result => console.log(result))
+          .catch(err => console.log(err));;
         console.log("Viagem criada com sucesso: ", dicMessageContent.cIdTrip);
         socket.emit("nova_viagem_criada", "Viagem cadastrada com sucesso!");
 
@@ -97,8 +90,18 @@ io.on('connection', (socket) => {
         socket.emit("nova_viagem_erro", "Erro ao cadastrar viagem!");
       }
     }
-    pega_cIdTrp({ "cIdTrip": newTrip.cIdTrip });
+    pega_cIdTrp({ "cIdTrip": dicMessageContent.cIdTrip });
+
   });
+
+  socket.on('joinRoom', function (cIdTrip_value) {
+    socket.join(cIdTrip_value);
+    console.log("Entrando na sala: ", cIdTrip_value);
+    Msg.find({ cIdTrip: cIdTrip_value }).then(result => {
+      socket.emit('all_messages', result);
+      socket.emit('online_na_sala', "Usuário logado na sala");
+    });
+  })
 
   socket.on('newUser', function (params) {
     console.log("Inicio da funcao");
@@ -148,7 +151,7 @@ io.on('connection', (socket) => {
   socket.on('sendMessage', (MessageContent) => {
     var dicMessageContent = {
       'cIdTrip': MessageContent.cIdTrip,
-      'cIdMessage': null,
+      'cIdMessage': MessageContent.cIdMessage,
       'cIdUser': MessageContent.cIdUser,
       'date': Date.now(),
       'cContent': MessageContent.cContent,
