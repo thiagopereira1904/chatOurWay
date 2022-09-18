@@ -13,6 +13,9 @@ const io = socketIO(server);
 
 const mongoose = require("mongoose");
 const mongoDB = "mongodb+srv://thiago-psilva2812:dpmp658450@cluster0.wjabzhu.mongodb.net/message-database?retryWrites=true&w=majority";
+
+
+
 const msgSchema = new mongoose.Schema({
   cIdTrip: {
     type: Number,
@@ -45,6 +48,9 @@ const msgSchema = new mongoose.Schema({
     }
   ]
 });
+
+
+
 const Msg = mongoose.model('msg', msgSchema);
 module.exports = Msg;
 mongoose.connect(mongoDB).then(() => {
@@ -61,47 +67,99 @@ io.on('connection', (socket) => {
 
   socket.on('joinRoom', function (cIdTrip_value) {
     socket.join(cIdTrip_value);
-
+    console.log("Entrando na sala: ", cIdTrip_value);
     Msg.find({ cIdTrip: cIdTrip_value }).then(result => {
-      console.log(result);
       socket.emit('all_messages', result);
+      socket.emit('online_na_sala', "Usuário logado na sala");
     });
   })
+
   socket.on('newRoom', function (newTrip) {
     var dicMessageContent = {
       'cIdTrip': newTrip.cIdTrip,
       'listUserTrip': newTrip.listUserTrip
     }
-    const message = new Msg(dicMessageContent)
-    message.save().then(() => {
-    });
 
-     Msg.findOneAndUpdate(
-       { cIdTrip: dicMessageContent.cIdTrip },
-       { $push: { "listUserTrip": newTrip.listUserTrip} }
-     ).exec(); 
- 
-     Msg.find({ cIdTrip: dicMessageContent.cIdTrip }).then(result => {
-       console.log(result);
-     });
-     
+    async function pega_cIdTrp(params) {
+      const resultado = await Msg.findOne(params);
+      if (resultado == null) {
+        const message = new Msg(dicMessageContent)
+        message.save();
+        console.log("Viagem criada com sucesso: ", dicMessageContent.cIdTrip);
+        socket.emit("nova_viagem_criada", "Viagem cadastrada com sucesso!");
+
+        Msg.findOneAndUpdate(
+          { cIdTrip: dicMessageContent.cIdTrip },
+          { $push: { "listUserTrip": newTrip.listUserTrip } }
+        ).exec();
+      } else {
+        console.log("Erro ao criar viagem: ", dicMessageContent.cIdTrip);
+        socket.emit("nova_viagem_erro", "Erro ao cadastrar viagem!");
+      }
+    }
+    pega_cIdTrp({ "cIdTrip": newTrip.cIdTrip });
+  });
+
+  socket.on('newUser', function (params) {
+    console.log("Inicio da funcao");
+
+
+    userTrip = {
+      'cIdTrip': params.cIdTrip,
+      'cIdUser': params.cIdUser
+    }
+
+
+    async function valida_usuario(cIdTrip, cIdUser) {
+      console.log("teste");
+      const resTrip = await Msg.findOne({ "cIdTrip": cIdTrip });
+
+      if (resTrip == null) {
+        console.log("Viagem não encontrada");
+      } else {
+        var user_cadastrado = false;
+
+        for (var i = 0; i < resTrip.listUserTrip.length; i++) {
+          console.log(resTrip.listUserTrip[i]);
+          if (resTrip.listUserTrip[i].cIdUser == cIdUser) {
+            user_cadastrado = true;
+          }
+        }
+        console.log(user_cadastrado);
+
+        if (user_cadastrado == true) {
+          console.log("Usuário já cadastrado na viagem!");
+        } else {
+
+          Msg.findOneAndUpdate(
+            { cIdTrip: cIdTrip },
+            { $push: { "listUserTrip": [{ "cIdUser": cIdUser }] } }
+          ).exec();
+
+          console.log("Usuário cadastrado com sucesso!");
+        }
+      }
+    }
+    valida_usuario(userTrip.cIdTrip, userTrip.cIdUser);
+
   });
 
 
   socket.on('sendMessage', (MessageContent) => {
     var dicMessageContent = {
       'cIdTrip': MessageContent.cIdTrip,
-      'cIdMessage': MessageContent.cIdMessage,
+      'cIdMessage': null,
       'cIdUser': MessageContent.cIdUser,
       'date': Date.now(),
       'cContent': MessageContent.cContent,
       'xTypeMessageContent': MessageContent.xTypeMessageContent
     }
+
     Msg.findOneAndUpdate(
       { cIdTrip: dicMessageContent.cIdTrip },
-      { $push: { "listMessages": dicMessageContent }}
+      { $push: { "listMessages": dicMessageContent } }
     ).exec();
-    socket.to(dicMessageContent.cIdTrip).emit(dicMessageContent);
+    io.sockets.in(dicMessageContent.cIdTrip).emit("response_message", dicMessageContent)
   });
 
 
