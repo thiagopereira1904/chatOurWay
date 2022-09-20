@@ -15,7 +15,6 @@ const mongoose = require("mongoose");
 const mongoDB = "mongodb+srv://thiago-psilva2812:dpmp658450@cluster0.wjabzhu.mongodb.net/message-database?retryWrites=true&w=majority";
 
 
-
 const msgSchema = new mongoose.Schema({
   cIdTrip: {
     type: Number,
@@ -153,11 +152,12 @@ io.on('connection', (socket) => {
       'cIdTrip': MessageContent.cIdTrip,
       'cIdMessage': MessageContent.cIdMessage,
       'cIdUser': MessageContent.cIdUser,
-      'date': Date.now(),
+      'date': new Date,
       'cContent': MessageContent.cContent,
       'xTypeMessageContent': MessageContent.xTypeMessageContent
     }
 
+    console.log(new Date);
     Msg.findOneAndUpdate(
       { cIdTrip: dicMessageContent.cIdTrip },
       { $push: { "listMessages": dicMessageContent } }
@@ -168,5 +168,6 @@ io.on('connection', (socket) => {
 
 });
 
-
 setInterval(() => io.emit('time', new Date().toTimeString()), 1000);
+
+
