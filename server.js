@@ -36,7 +36,7 @@ const msgSchema = new mongoose.Schema({
         type: Number
       },
       date: {
-        type: String
+        type: Date
       },
       cContent: {
         type: String
@@ -98,6 +98,7 @@ io.on('connection', (socket) => {
     console.log("Entrando na sala: ", cIdTrip_value);
     Msg.find({ cIdTrip: cIdTrip_value }).then(result => {
       socket.emit('all_messages', result);
+      console.log(result);
       socket.emit('online_na_sala', "Usuário logado na sala");
     });
   })
@@ -151,17 +152,14 @@ io.on('connection', (socket) => {
 
 
   socket.on('sendMessage', (MessageContent) => {
-    var data_atual = new Date;
     var dicMessageContent = {
       'cIdTrip': MessageContent.cIdTrip,
       'cIdMessage': MessageContent.cIdMessage,
       'cIdUser': MessageContent.cIdUser,
-      'date': data_atual.toLocaleString(),
+      'date': MessageContent.date,
       'cContent': MessageContent.cContent,
       'xTypeMessageContent': MessageContent.xTypeMessageContent
     }
-
-    console.log(data_atual.toLocaleString({hour12:false}))
 
     Msg.findOneAndUpdate(
       { cIdTrip: dicMessageContent.cIdTrip },
