@@ -36,7 +36,7 @@ const msgSchema = new mongoose.Schema({
         type: Number
       },
       date: {
-        type: Date
+        type: String
       },
       cContent: {
         type: String
@@ -161,7 +161,8 @@ io.on('connection', (socket) => {
       'xTypeMessageContent': MessageContent.xTypeMessageContent
     }
 
-  
+    console.log(data_atual.toLocaleString({hour12:false}))
+
     Msg.findOneAndUpdate(
       { cIdTrip: dicMessageContent.cIdTrip },
       { $push: { "listMessages": dicMessageContent } }
