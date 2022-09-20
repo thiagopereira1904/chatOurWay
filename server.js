@@ -118,6 +118,7 @@ io.on('connection', (socket) => {
 
       if (resTrip == null) {
         console.log("Viagem não encontrada");
+        socket.emit("erro_ao_encontrar_viagem", "Viagem não encontrada!")
       } else {
         var user_cadastrado = false;
 
@@ -131,6 +132,7 @@ io.on('connection', (socket) => {
 
         if (user_cadastrado == true) {
           console.log("Usuário já cadastrado na viagem!");
+          socket.emit("usuario_ja_cadastrado_na_viagem", "Usuário já cadastrado da viagem!");
         } else {
 
           Msg.findOneAndUpdate(
@@ -139,6 +141,7 @@ io.on('connection', (socket) => {
           ).exec();
 
           console.log("Usuário cadastrado com sucesso!");
+          socket.emit("usuario_cadastrado", "Usuário cadastrado na viagem com sucesso!");
         }
       }
     }
@@ -148,16 +151,17 @@ io.on('connection', (socket) => {
 
 
   socket.on('sendMessage', (MessageContent) => {
+    var data_atual = new Date;
     var dicMessageContent = {
       'cIdTrip': MessageContent.cIdTrip,
       'cIdMessage': MessageContent.cIdMessage,
       'cIdUser': MessageContent.cIdUser,
-      'date': new Date,
+      'date': data_atual.toLocaleString(),
       'cContent': MessageContent.cContent,
       'xTypeMessageContent': MessageContent.xTypeMessageContent
     }
 
-    console.log(new Date);
+  
     Msg.findOneAndUpdate(
       { cIdTrip: dicMessageContent.cIdTrip },
       { $push: { "listMessages": dicMessageContent } }
